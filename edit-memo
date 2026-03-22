@@ -1,8 +1,8 @@
 ID=$1 
 
-if [ -z "$ID"];then
+if [ -z "$ID" ];then
     echo 'ID cannot be empty'
     exit 1
 fi
 
-nvim "ftp://username:password@mini-server:9124/$ID"
+nvim "ftp://mini-server:9124/$ID"
