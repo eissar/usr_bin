@@ -5,4 +5,4 @@ if [ -z "$ID"];then
     exit 1
 fi
 
-nvim "ftp://mini-server:9124/$ID"
+nvim "ftp://username:password@mini-server:9124/$ID"
