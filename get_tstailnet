@@ -1,0 +1,1 @@
+tailscale status --json | jq -r --argjson id "$(tailscale status --json | jq .Self.UserID)" '.User[] | select(.ID == $id) | .LoginName'
