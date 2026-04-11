@@ -1,0 +1,30 @@
+#!/bin/sh
+
+uname='eissar'
+TARGET_FILE="derpmap.cached.json"
+WATCH_DIR="/var/lib/tailscale"
+
+PLUGIN_ID=$(xq -r '.. | select(."@name"? == "plugins") | .property[]? | select(."@value"? == "genmon") | select(.. | select(."@name"? == "text" and ."@value"? == "TAILSCALE")) | ."@name" | split("-")[1]' "/home/$uname/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml")
+
+if [ -z "$PLUGIN_ID" ]; then
+    echo "Could not find Genmon ID. Check your XML path or 'TAILSCALE' label."
+    exit 1
+fi
+
+# 2. Setup environment for the user's D-Bus session
+export XDG_RUNTIME_DIR="/run/user/$(id -u "$uname")"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+echo "Watching $WATCH_DIR for changes to $TARGET_FILE..."
+
+inotifywait -m "$WATCH_DIR" -e moved_to | while read -r path event file; do
+    if [ "$file" = "$TARGET_FILE" ]; then
+        echo "Tailscale map updated, refreshing panel..."
+        
+        sudo -u "$uname" DISPLAY=:0 \
+          DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+          XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+          xfce4-panel --plugin-event="genmon-$PLUGIN_ID:refresh:bool:true"
+    fi
+done
+
